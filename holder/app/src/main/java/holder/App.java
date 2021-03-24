@@ -12,6 +12,7 @@ import org.medibloc.panacea.encoding.message.did.DidVerificationMethod;
 import org.medibloc.vc.key.Curve;
 import org.medibloc.vc.key.KeyDecoder;
 import org.medibloc.vc.model.Credential;
+import org.medibloc.vc.model.CredentialSubject;
 import org.medibloc.vc.verifiable.VerifiableCredential;
 import org.medibloc.vc.verifiable.jwt.JwtVerifiableCredential;
 import retrofit2.Call;
@@ -43,8 +44,12 @@ public class App {
         VerifiableCredential vc = new JwtVerifiableCredential(jwt);
 
         Credential credential = vc.getCredential();
-        ECPublicKey publicKey = getDidPublicKey(credential.getIssuer().getId(), vc.getKeyId());
+        CredentialSubject cs = credential.getCredentialSubject();
+        String hospital = (String) cs.getClaims().get("hospital");
+        System.out.println(hospital);
 
+        // VC가 위조되지 않았는지 검증
+        ECPublicKey publicKey = getDidPublicKey(credential.getIssuer().getId(), vc.getKeyId());
         vc.verify(publicKey);
     }
 
