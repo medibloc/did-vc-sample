@@ -28,10 +28,12 @@ public class App {
 
     private static void startRestServer(Holder holder) {
         Express app = new Express();
-        app.get("/vp/nonce/:nonce", (req, res) -> {
-            // TODO: Use the nonce. The new vc-java library will be released soon.
+        app.get("/vp/verifier/:verifier/nonce/:nonce", (req, res) -> {
+            String verifierDid = req.getParam("verifier");
+            String nonce = req.getParam("nonce");
+
             try {
-                VerifiablePresentation vp = holder.createVerifiablePresentation();
+                VerifiablePresentation vp = holder.createVerifiablePresentation(verifierDid, nonce);
                 res.send(vp.serialize());
             } catch (Exception e) {
                 e.printStackTrace();

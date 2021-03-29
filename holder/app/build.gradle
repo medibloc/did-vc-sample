@@ -20,7 +20,15 @@ repositories {
             password = System.getenv("GPR_API_KEY")
         }
     }
-    // Use JCenter for resolving dependencies.
+    maven {
+        url = "https://maven.pkg.github.com/medibloc/vc-java"
+        // GitHub Packages credentials
+        credentials {
+            username = System.getenv("GPR_USER")
+            password = System.getenv("GPR_API_KEY")
+        }
+    }
+    mavenCentral()
     jcenter()
 }
 
@@ -29,7 +37,7 @@ dependencies {
     testImplementation 'junit:junit:4.13'
 
     // This dependency is used by the application.
-    implementation 'org.medibloc:vc:0.0.2'
+    implementation 'org.medibloc:vc-java:0.0.4'
     implementation group: 'org.medibloc.panacea', name: 'panacea-java', version: '0.1.4'
 
     implementation 'com.squareup.retrofit2:retrofit:1.6.0'

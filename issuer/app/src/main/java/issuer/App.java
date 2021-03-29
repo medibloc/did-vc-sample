@@ -20,14 +20,15 @@ public class App {
 
         Express app = new Express();
 
-        app.get("/vc/did/:did", (req, res) -> {
+        app.get("/vc/did/:did/nonce/:nonce", (req, res) -> {
             String subjectDid = req.getParam("did");
+            String nonce = req.getParam("nonce");
 
             try {
                 ECPrivateKey privateKey = KeyDecoder.ecPrivateKey(issuer.getDidWallet().getEcKey().getPrivKey(), Curve.SECP256K1);
                 String keyId = issuer.getDidDocument().getVerificationMethods().get(0).getId().getValue();
 
-                VerifiableCredential vc = issuer.issueVc(issuer.getDidDocument().getId().getValue(), subjectDid, privateKey, keyId);
+                VerifiableCredential vc = issuer.issueVc(issuer.getDidDocument().getId().getValue(), subjectDid, privateKey, keyId, nonce);
                 res.send(vc.serialize());
             } catch (Exception e) {
                 e.printStackTrace();

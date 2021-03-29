@@ -5,6 +5,6 @@ import retrofit2.http.GET;
 import retrofit2.http.Path;
 
 public interface RestClientService {
-    @GET("vp/nonce/{nonce}")
-    Call<String> getVp(@Path("nonce") String nonce);
+    @GET("vp/verifier/{verifier}/nonce/{nonce}")
+    Call<String> getVp(@Path("verifier") String verifier, @Path("nonce") String nonce);
 }

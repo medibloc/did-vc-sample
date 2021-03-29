@@ -24,10 +24,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class Holder {
     private static final String ISSUER_ENDPOINT = "http://localhost:8888";
@@ -58,7 +55,9 @@ public class Holder {
 
         RestClientService service = retrofit.create(RestClientService.class);
 
-        Call<String> call = service.issueVc(this.didDocument.getId().getValue());
+        String nonce = UUID.randomUUID().toString();
+
+        Call<String> call = service.issueVc(this.didDocument.getId().getValue(), nonce);
         Response<String> response = call.execute();
         if (response.code() != 200) {
             throw new Exception("status code: " + response.code());
@@ -70,7 +69,7 @@ public class Holder {
 
         // Check if VC is not forged
         ECPublicKey publicKey = Panacea.getDidPublicKey(vc.getCredential().getIssuer().getId(), vc.getKeyId());
-        vc.verify(publicKey);
+        vc.verify(publicKey, nonce);
 
         this.vcList.add(vc);
 
@@ -78,7 +77,7 @@ public class Holder {
     }
 
 
-    VerifiablePresentation createVerifiablePresentation() throws Exception {
+    VerifiablePresentation createVerifiablePresentation(String verifierDid, String nonce) throws Exception {
         // In this example, pick the 1st VC.
         VerifiableCredential vc = this.vcList.get(0);
 
@@ -88,6 +87,7 @@ public class Holder {
                 .id(new URL("http://my-presentation.com/1"))
                 .verifiableCredentials(Collections.singletonList(vc))
                 .holder(this.didDocument.getId().getValue())
+                .verifier(verifierDid)
                 .build();
 
         DidVerificationMethod veriMethod = this.didDocument.getVerificationMethods().get(0);
@@ -96,7 +96,8 @@ public class Holder {
                 presentation,
                 "ES256K",
                 veriMethod.getId().getValue(),
-                KeyDecoder.ecPrivateKey(this.didWallet.getEcKey().getPrivKey(), getCurve(veriMethod))
+                KeyDecoder.ecPrivateKey(this.didWallet.getEcKey().getPrivKey(), getCurve(veriMethod)),
+                nonce
         );
     }
 

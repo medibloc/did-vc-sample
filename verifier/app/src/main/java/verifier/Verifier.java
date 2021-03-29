@@ -22,7 +22,10 @@ public class Verifier {
 
         RestClientService service = retrofit.create(RestClientService.class);
 
-        Call<String> call = service.getVp(UUID.randomUUID().toString());
+        String verifierDid = "my-identifier";
+        String nonce = UUID.randomUUID().toString();
+
+        Call<String> call = service.getVp(verifierDid, nonce);
         Response<String> response = call.execute();
         if (response.code() != 200) {
             throw new Exception("status code: " + response.code());
@@ -34,7 +37,7 @@ public class Verifier {
 
         // Check if VP is not forged
         ECPublicKey holderPublicKey = Panacea.getDidPublicKey(vp.getPresentation().getHolder(), vp.getKeyId());
-        vp.verify(holderPublicKey);
+        vp.verify(holderPublicKey, verifierDid, nonce);
 
         // Check if VCs in the VP are not forged
         for (VerifiableCredential vc : vp.getPresentation().getVerifiableCredentials()) {

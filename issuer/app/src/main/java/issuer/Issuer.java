@@ -36,7 +36,7 @@ public class Issuer {
         return didDocument;
     }
 
-    public VerifiableCredential issueVc(String issuerDid, String userDid, ECPrivateKey privateKey, String keyId) throws VerifiableCredentialException, MalformedURLException {
+    public VerifiableCredential issueVc(String issuerDid, String userDid, ECPrivateKey privateKey, String keyId, String nonce) throws VerifiableCredentialException, MalformedURLException {
         Credential credential = Credential.builder()
                 .contexts(Arrays.asList("https://www.w3.org/2018/credentials/v1"))
                 .types(Arrays.asList("VerifiableCredential", "VaccineCredential"))
@@ -50,7 +50,8 @@ public class Issuer {
                 credential,
                 "ES256K",
                 keyId,
-                privateKey
+                privateKey,
+                nonce
         );
     }
 
