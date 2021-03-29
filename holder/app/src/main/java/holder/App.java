@@ -3,82 +3,51 @@
  */
 package holder;
 
-import org.medibloc.panacea.PanaceaApiClientFactory;
-import org.medibloc.panacea.PanaceaApiRestClient;
-import org.medibloc.panacea.encoding.message.did.Did;
-import org.medibloc.panacea.encoding.message.did.DidDocument;
-import org.medibloc.panacea.encoding.message.did.DidDocumentWithMeta;
-import org.medibloc.panacea.encoding.message.did.DidVerificationMethod;
-import org.medibloc.vc.key.Curve;
-import org.medibloc.vc.key.KeyDecoder;
+import express.Express;
+import express.utils.Status;
+import org.medibloc.vc.VerifiableCredentialException;
 import org.medibloc.vc.model.Credential;
 import org.medibloc.vc.model.CredentialSubject;
 import org.medibloc.vc.verifiable.VerifiableCredential;
-import org.medibloc.vc.verifiable.jwt.JwtVerifiableCredential;
-import retrofit2.Call;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.scalars.ScalarsConverterFactory;
-
-import java.security.interfaces.ECPublicKey;
+import org.medibloc.vc.verifiable.VerifiablePresentation;
 
 public class App {
-    private static final String PANACEA_ENDPOINT = "https://testnet-api.gopanacea.org";
-
     public static void main(String[] args) throws Exception {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://localhost:8888")
-                .addConverterFactory(ScalarsConverterFactory.create())
-                .build();
+        // Generate/Register a DID
+        Holder holder = new Holder();
 
-        RestClientService service = retrofit.create(RestClientService.class);
+        // Request an issuance of a Verifiable Credential to an issuer
+        VerifiableCredential vc = holder.getVcFromIssuer();
+        printVc(vc);
 
-        Call<String> call = service.issueVc("did:panacea:7aR7Cg46JamVbJgk8azVgUm7Prd74ry1Uct87nZqL3ny");
-        Response<String> response = call.execute();
-        if (response.code() != 200) {
-            throw new Exception("status code: " + response.code());
-        }
-        String jwt = response.body();
-        System.out.println(jwt);
+        // Open a REST server to accept requests from verifiers
+        // NOTE: This should be a QR-code communication or something else, rather than the REST server
+        //       because the holder would be a mobile app.
+        startRestServer(holder);
+    }
 
-        VerifiableCredential vc = new JwtVerifiableCredential(jwt);
+    private static void startRestServer(Holder holder) {
+        Express app = new Express();
+        app.get("/vp/nonce/:nonce", (req, res) -> {
+            // TODO: Use the nonce. The new vc-java library will be released soon.
+            try {
+                VerifiablePresentation vp = holder.createVerifiablePresentation();
+                res.send(vp.serialize());
+            } catch (Exception e) {
+                e.printStackTrace();
+                res.sendStatus(Status._500);
+            }
+        });
 
+        int port = 9999;
+        System.out.printf("Serving REST: %d\n", port);
+        app.listen(port);
+    }
+
+    private static void printVc(VerifiableCredential vc) throws VerifiableCredentialException {
         Credential credential = vc.getCredential();
         CredentialSubject cs = credential.getCredentialSubject();
         String hospital = (String) cs.getClaims().get("hospital");
-        System.out.println(hospital);
-
-        // VC가 위조되지 않았는지 검증
-        ECPublicKey publicKey = getDidPublicKey(credential.getIssuer().getId(), vc.getKeyId());
-        vc.verify(publicKey);
-    }
-
-    private static ECPublicKey getDidPublicKey(String did, String keyId) throws Exception {
-        PanaceaApiRestClient panaceaClient = PanaceaApiClientFactory.newInstance().newRestClient(PANACEA_ENDPOINT);
-
-        DidDocumentWithMeta didDocumentWithMeta = panaceaClient.getDidDocument(new Did(did));
-        DidDocument doc = didDocumentWithMeta.getDocument();
-        DidVerificationMethod verificationMethod = getDidVerificationMethod(doc, keyId);
-        byte[] publicKey = verificationMethod.decodePublicKey();
-
-        return KeyDecoder.ecPublicKey(publicKey, getCurve(verificationMethod));
-    }
-
-    private static DidVerificationMethod getDidVerificationMethod(DidDocument doc, String keyId) throws Exception {
-        for (DidVerificationMethod method : doc.getVerificationMethods()) {
-            if (method.getId().getValue().equals(keyId)) {
-                return method;
-            }
-        }
-        throw new Exception("DidVerificationMethod not found");
-    }
-
-    private static Curve getCurve(DidVerificationMethod verificationMethod) throws Exception {
-        switch (verificationMethod.getType()) {
-            case ES256K:
-                return Curve.SECP256K1;
-            default:
-                throw new Exception("Invalid VerificationMethod type");
-        }
+        System.out.printf("hospital: %s\n", hospital);
     }
 }

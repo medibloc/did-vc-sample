@@ -35,6 +35,8 @@ public class App {
             }
         });
 
-        app.listen(8888);
+        int port = 8888;
+        System.out.printf("Serving REST: %d\n", port);
+        app.listen(port);
     }
 }

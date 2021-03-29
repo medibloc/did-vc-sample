@@ -1,13 +1,8 @@
 package issuer;
 
-import org.medibloc.panacea.*;
-import org.medibloc.panacea.domain.TxResponse;
-import org.medibloc.panacea.encoding.message.BroadcastReq;
-import org.medibloc.panacea.encoding.message.MsgCreateDid;
-import org.medibloc.panacea.encoding.message.StdFee;
-import org.medibloc.panacea.encoding.message.StdTx;
+import org.medibloc.panacea.DidWallet;
+import org.medibloc.panacea.PanaceaApiException;
 import org.medibloc.panacea.encoding.message.did.DidDocument;
-import org.medibloc.panacea.encoding.message.did.DidSignable;
 import org.medibloc.vc.VerifiableCredentialException;
 import org.medibloc.vc.model.Credential;
 import org.medibloc.vc.model.CredentialSubject;
@@ -24,16 +19,13 @@ import java.util.Date;
 import java.util.HashMap;
 
 public class Issuer {
-    private static final String PANACEA_ENDPOINT = "https://testnet-api.gopanacea.org";
-    private static final String PANACEA_ACCOUNT_ADDR = "panacea111111111111111111111";
-    private static final String PANACEA_MNEMONIC = "MY_MNOMENIC";
-
     private final DidWallet didWallet;
     private final DidDocument didDocument;
 
     public Issuer() throws PanaceaApiException, NoSuchAlgorithmException, IOException {
         this.didWallet = DidWallet.createRandomWallet();
-        this.didDocument = registerDid(this.didWallet);
+        this.didDocument = Panacea.registerDid(this.didWallet);
+        System.out.printf("DID created: %s\n", this.didDocument.getId());
     }
 
     public DidWallet getDidWallet() {
@@ -42,28 +34,6 @@ public class Issuer {
 
     public DidDocument getDidDocument() {
         return didDocument;
-    }
-
-    private static DidDocument registerDid(DidWallet didWallet) throws NoSuchAlgorithmException, IOException, PanaceaApiException {
-        PanaceaApiRestClient panaceaClient = PanaceaApiClientFactory.newInstance().newRestClient(PANACEA_ENDPOINT);
-
-        DidDocument doc = DidDocument.create(didWallet);
-        doc.getVerificationMethods().get(0).getId();
-
-        MsgCreateDid msg = new MsgCreateDid(doc.getId(), doc, PANACEA_ACCOUNT_ADDR);
-        msg.sign(doc.getVerificationMethods().get(0).getId(), didWallet, DidSignable.INITIAL_SEQUENCE);
-
-        Wallet wallet = Wallet.createWalletFromMnemonicCode(PANACEA_MNEMONIC, "panacea", 0);
-        wallet.ensureWalletIsReady(panaceaClient);
-
-        StdTx tx = new StdTx(msg, new StdFee("umed", "10000", "200000"), "");
-        tx.sign(wallet);
-        wallet.increaseAccountSequence();
-
-        TxResponse res = panaceaClient.broadcast(new BroadcastReq(tx, "block"));
-        assert res.getCode() == 0;
-
-        return doc;
     }
 
     public VerifiableCredential issueVc(String issuerDid, String userDid, ECPrivateKey privateKey, String keyId) throws VerifiableCredentialException, MalformedURLException {

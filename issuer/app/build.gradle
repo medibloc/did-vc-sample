@@ -30,7 +30,7 @@ dependencies {
 
     // This dependency is used by the application.
     implementation 'org.medibloc:vc:0.0.2'
-    implementation group: 'org.medibloc.panacea', name: 'panacea-java', version: '0.1.3'
+    implementation group: 'org.medibloc.panacea', name: 'panacea-java', version: '0.1.4'
     implementation 'io.vacco.java-express:java-express:0.2.1'
 }
 
