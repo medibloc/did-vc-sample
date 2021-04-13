@@ -28,8 +28,12 @@ public class Main {
 
                 StringRpcServer rpcServer = new StringRpcServer(channel, "rpc_queue") {
                     public String handleStringCall(String request) {
-                        System.out.println("request: " + request);
-                        return "I'm a server";
+                        try {
+                            System.out.println("request: " + request);
+                            return "I'm a server";
+                        } finally {
+                            this.terminateMainloop();
+                        }
                     }
                 };
 
