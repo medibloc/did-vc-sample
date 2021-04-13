@@ -36,9 +36,12 @@ public class Main {
                 });
 
                 RpcClient rpcClient = new RpcClient(rpcClientParams);
-
-                String response = rpcClient.stringCall("I'm a client");
-                System.out.println("response: " + response);
+                try {
+                    String response = rpcClient.stringCall("I'm a client");
+                    System.out.println("response: " + response);
+                } finally {
+                    rpcClient.close();
+                }
             } finally {
                 channel.close();
             }
