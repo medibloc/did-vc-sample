@@ -3,12 +3,10 @@ package org.medibloc.vc_holder;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.DeliverCallback;
+import com.rabbitmq.client.StringRpcServer;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeoutException;
@@ -28,38 +26,14 @@ public class Main {
                 channel.queuePurge("rpc_queue");
                 channel.basicQos(1);
 
-                System.out.println(" [x] Awaiting RPC requests");
-
-                Object monitor = new Object();
-                DeliverCallback deliverCallback = ((consumerTag, message) -> {
-                    BasicProperties replyProps = new BasicProperties
-                            .Builder()
-                            .correlationId(message.getProperties().getCorrelationId())
-                            .build();
-
-                    try {
-                        String request = new String(message.getBody(), "UTF-8");
+                StringRpcServer rpcServer = new StringRpcServer(channel, "rpc_queue") {
+                    public String handleStringCall(String request) {
                         System.out.println("request: " + request);
-                    } finally {
-                        channel.basicPublish("", message.getProperties().getReplyTo(), replyProps, "I'm a server".getBytes(StandardCharsets.UTF_8));
-                        channel.basicAck(message.getEnvelope().getDeliveryTag(), false);
-                        // RabbitMq consumer worker thread notifies the RPC server owner thread
-                        synchronized (monitor) {
-                            monitor.notify();
-                        }
+                        return "I'm a server";
                     }
-                });
+                };
 
-                channel.basicConsume("rpc_queue", false, deliverCallback, (consumerTag -> {}));
-                while (true) {
-                    synchronized (monitor) {
-                        try {
-                            monitor.wait();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
+                rpcServer.mainloop();
             } finally {
                 channel.close();
             }
