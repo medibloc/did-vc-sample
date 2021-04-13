@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
 public class Main {
@@ -22,11 +23,14 @@ public class Main {
         try {
             Channel channel = conn.createChannel();
             try {
-                channel.queueDeclare("rpc_queue", false, false, false, null);
-                channel.queuePurge("rpc_queue");
-                channel.basicQos(1);
+                String queueName = UUID.randomUUID().toString();
+                System.out.println("queueName: " + queueName);
 
-                StringRpcServer rpcServer = new StringRpcServer(channel, "rpc_queue") {
+                channel.queueDeclare(queueName, false, false, false, null);
+//                channel.queuePurge(queueName);
+//                channel.basicQos(1);
+
+                StringRpcServer rpcServer = new StringRpcServer(channel, queueName) {
                     public String handleStringCall(String request) {
                         try {
                             System.out.println("request: " + request);

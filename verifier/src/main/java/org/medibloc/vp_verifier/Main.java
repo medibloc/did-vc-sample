@@ -21,11 +21,12 @@ public class Main {
         try {
             Channel channel = conn.createChannel();
             try {
+                String reqQueueName = "53d4b627-566b-4ce0-b6d3-75ffde3ae1db"; // via QR-code
                 String replyQueueName = channel.queueDeclare().getQueue();
 
                 RpcClientParams rpcClientParams = new RpcClientParams();
                 rpcClientParams.exchange("");
-                rpcClientParams.routingKey("rpc_queue");
+                rpcClientParams.routingKey(reqQueueName);
                 rpcClientParams.channel(channel);
                 rpcClientParams.replyTo(replyQueueName);
                 rpcClientParams.correlationIdSupplier(new Supplier<String>() {
