@@ -29,11 +29,11 @@ public class App {
     private static void startRestServer(Holder holder) {
         Express app = new Express();
         app.get("/vp/verifier/:verifier/nonce/:nonce", (req, res) -> {
-            String verifierDid = req.getParam("verifier");
+            String verifier = req.getParam("verifier");
             String nonce = req.getParam("nonce");
 
             try {
-                VerifiablePresentation vp = holder.createVerifiablePresentation(verifierDid, nonce);
+                VerifiablePresentation vp = holder.createVerifiablePresentation(verifier, nonce);
                 res.send(vp.serialize());
             } catch (Exception e) {
                 e.printStackTrace();

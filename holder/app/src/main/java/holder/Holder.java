@@ -77,7 +77,7 @@ public class Holder {
     }
 
 
-    VerifiablePresentation createVerifiablePresentation(String verifierDid, String nonce) throws Exception {
+    VerifiablePresentation createVerifiablePresentation(String verifier, String nonce) throws Exception {
         // In this example, pick the 1st VC.
         VerifiableCredential vc = this.vcList.get(0);
 
@@ -87,7 +87,7 @@ public class Holder {
                 .id(new URL("http://my-presentation.com/1"))
                 .verifiableCredentials(Collections.singletonList(vc))
                 .holder(this.didDocument.getId().getValue())
-                .verifier(verifierDid)
+                .verifier(verifier)
                 .build();
 
         DidVerificationMethod veriMethod = this.didDocument.getVerificationMethods().get(0);
